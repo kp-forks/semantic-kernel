@@ -62,7 +62,7 @@ public sealed class LocalUserMSALCredentialManager
             .WithLinuxKeyring(
                 schemaName: CacheSchemaName,
                 collection: MsalCacheHelper.LinuxKeyRingDefaultCollection,
-                secretLabel: "MSAL token cache for Semantic Kernel skills.",
+                secretLabel: "MSAL token cache for Semantic Kernel plugins.",
                 attribute1: new KeyValuePair<string, string>("Version", "1"),
                 attribute2: new KeyValuePair<string, string>("Product", "SemanticKernel"))
             .Build();
@@ -88,12 +88,12 @@ public sealed class LocalUserMSALCredentialManager
         Ensure.NotNull(scopes, nameof(scopes));
 
         IPublicClientApplication app = this._publicClientApplications.GetOrAdd(
-            key: this.PublicClientApplicationsKey(clientId, tenantId),
+            key: PublicClientApplicationsKey(clientId, tenantId),
             valueFactory: _ =>
             {
                 IPublicClientApplication newPublicApp = PublicClientApplicationBuilder.Create(clientId)
                     .WithRedirectUri(redirectUri.ToString())
-                    .WithTenantId(tenantId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
                     .Build();
                 this._cacheHelper.RegisterCache(newPublicApp.UserTokenCache);
                 return newPublicApp;
@@ -122,5 +122,5 @@ public sealed class LocalUserMSALCredentialManager
     /// <summary>
     /// Returns a key for the public client application dictionary.
     /// </summary>
-    private string PublicClientApplicationsKey(string clientId, string tenantId) => $"{clientId}_{tenantId}";
+    private static string PublicClientApplicationsKey(string clientId, string tenantId) => $"{clientId}_{tenantId}";
 }

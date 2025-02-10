@@ -4,7 +4,8 @@
     <!-- THIS PROPERTY GROUP MUST COME FIRST -->
     <AssemblyName>Microsoft.SemanticKernel.Plugins.Web</AssemblyName>
     <RootNamespace>$(AssemblyName)</RootNamespace>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+    <VersionSuffix>alpha</VersionSuffix>
   </PropertyGroup>
   
   <Import Project="$(RepoRoot)/dotnet/nuget/nuget-package.props" />
@@ -12,8 +13,8 @@
 
   <PropertyGroup>
     <!-- NuGet Package Settings -->
-    <Title>Semantic Kernel - Microsoft Bing Connector</Title>
-    <Description>Semantic Kernel Web Skill: search the web, download files, etc.</Description>
+    <Title>Semantic Kernel - Web Plugins</Title>
+    <Description>Semantic Kernel web plugins: search the web, download files, etc.</Description>
   </PropertyGroup>
 
   <ItemGroup>

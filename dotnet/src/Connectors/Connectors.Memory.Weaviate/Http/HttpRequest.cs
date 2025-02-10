@@ -4,13 +4,16 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel.Text;
 
-namespace Microsoft.SemanticKernel.Connectors.Memory.Weaviate.Http;
+namespace Microsoft.SemanticKernel.Connectors.Weaviate;
 
 internal static class HttpRequest
 {
-    private static readonly JsonSerializerOptions s_jsonSerializerOptions = CreateSerializerOptions();
+    private static readonly JsonSerializerOptions s_jsonOptionsCache = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
 
     public static HttpRequestMessage CreateGetRequest(string url, object? payload = null)
     {
@@ -28,30 +31,30 @@ internal static class HttpRequest
         };
     }
 
-    public static HttpRequestMessage CreateDeleteRequest(string url)
+    public static HttpRequestMessage CreateDeleteRequest(string url, object? payload = null)
     {
-        return new(HttpMethod.Delete, url);
+        return new(HttpMethod.Delete, url)
+        {
+            Content = GetJsonContent(payload)
+        };
+    }
+
+    public static HttpRequestMessage CreatePutRequest(string url, object? payload = null)
+    {
+        return new(HttpMethod.Put, url)
+        {
+            Content = GetJsonContent(payload)
+        };
     }
 
     private static StringContent? GetJsonContent(object? payload)
     {
-        if (payload == null)
+        if (payload is null)
         {
             return null;
         }
 
-        string strPayload = payload as string ?? JsonSerializer.Serialize(payload, s_jsonSerializerOptions);
+        string strPayload = payload as string ?? JsonSerializer.Serialize(payload, s_jsonOptionsCache);
         return new(strPayload, Encoding.UTF8, "application/json");
-    }
-
-    private static JsonSerializerOptions CreateSerializerOptions()
-    {
-        var jso = new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-        jso.Converters.Add(new ReadOnlyMemoryConverter());
-        return jso;
     }
 }

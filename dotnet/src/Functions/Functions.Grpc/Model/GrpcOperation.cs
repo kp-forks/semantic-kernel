@@ -1,11 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-namespace Microsoft.SemanticKernel.Functions.Grpc.Model;
+using System.Collections.Generic;
+
+namespace Microsoft.SemanticKernel.Plugins.Grpc.Model;
 
 /// <summary>
 /// The gRPC operation.
 /// </summary>
-internal class GrpcOperation
+internal sealed class GrpcOperation
 {
     /// <summary>
     /// Name of 'address' argument used as override for the address provided by gRPC operation.
@@ -81,4 +83,23 @@ internal class GrpcOperation
     /// Specifier to prevent name clashes between types.
     /// </summary>
     public string? Package { get; set; }
+
+    /// <summary>
+    /// Returns list of gRPC operation parameters.
+    /// </summary>
+    /// <returns>The list of parameters.</returns>
+    internal static List<KernelParameterMetadata> CreateParameters() =>
+    [
+        // Register the "address" parameter so that it's possible to override it if needed.
+        new(GrpcOperation.AddressArgumentName)
+        {
+            Description = "Address for gRPC channel to use.",
+        },
+
+        // Register the "payload" parameter to be used as gRPC operation request message.
+        new(GrpcOperation.PayloadArgumentName)
+        {
+            Description = "gRPC request message.",
+        },
+    ];
 }

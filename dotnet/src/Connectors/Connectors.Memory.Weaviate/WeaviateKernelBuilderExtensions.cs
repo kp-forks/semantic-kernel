@@ -1,69 +1,60 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Net.Http;
-using Microsoft.SemanticKernel.Connectors.Memory.Weaviate;
+using Microsoft.Extensions.VectorData;
+using Microsoft.SemanticKernel.Connectors.Weaviate;
 
-#pragma warning disable IDE0130
 namespace Microsoft.SemanticKernel;
-#pragma warning restore IDE0130
 
 /// <summary>
-/// Provides extension methods for the <see cref="KernelBuilder"/> class to configure Weaviate memory connector.
+/// Extension methods to register Weaviate <see cref="IVectorStore"/> instances on the <see cref="IKernelBuilder"/>.
 /// </summary>
 public static class WeaviateKernelBuilderExtensions
 {
     /// <summary>
-    /// Registers Weaviate memory connector.
+    /// Register a Weaviate <see cref="IVectorStore"/> with the specified service ID.
     /// </summary>
-    /// <param name="builder">The <see cref="KernelBuilder"/> instance.</param>
-    /// <param name="endpoint">The Weaviate server endpoint URL.</param>
-    /// <param name="apiKey">The API key for accessing Weaviate server.</param>
-    /// <param name="apiVersion">The API version to use.</param>
-    /// <returns>Self instance</returns>
-    public static KernelBuilder WithWeaviateMemoryStore(
-        this KernelBuilder builder,
-        string endpoint,
-        string? apiKey,
-        string? apiVersion = null)
+    /// <param name="builder">The builder to register the <see cref="IVectorStore"/> on.</param>
+    /// <param name="httpClient">
+    /// <see cref="HttpClient"/> that is used to interact with Weaviate API.
+    /// <see cref="HttpClient.BaseAddress"/> should point to remote or local cluster and API key can be configured via <see cref="HttpClient.DefaultRequestHeaders"/>.
+    /// It's also possible to provide these parameters via <see cref="WeaviateVectorStoreOptions"/>.
+    /// </param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStore"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddWeaviateVectorStore(
+        this IKernelBuilder builder,
+        HttpClient? httpClient = default,
+        WeaviateVectorStoreOptions? options = default,
+        string? serviceId = default)
     {
-        builder.WithMemoryStorage((loggerFactory, httpHandlerFactory) =>
-        {
-            return new WeaviateMemoryStore(
-                HttpClientProvider.GetHttpClient(httpHandlerFactory, null, loggerFactory),
-                apiKey,
-                endpoint,
-                apiVersion,
-                loggerFactory);
-        });
-
+        builder.Services.AddWeaviateVectorStore(httpClient, options, serviceId);
         return builder;
     }
 
     /// <summary>
-    /// Registers Weaviate memory connector.
+    /// Register a Weaviate <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> and <see cref="IVectorizedSearch{TRecord}"/> with the specified service ID.
     /// </summary>
-    /// <param name="builder">The <see cref="KernelBuilder"/> instance</param>
-    /// <param name="httpClient">The optional <see cref="HttpClient"/> instance used for making HTTP requests.</param>
-    /// <param name="endpoint">The Weaviate server endpoint URL. If not specified, the base address of the HTTP client is used.</param>
-    /// <param name="apiKey">The API key for accessing Weaviate server.</param>
-    /// <param name="apiVersion">The API version to use.</param>
-    /// <returns>Self instance</returns>
-    public static KernelBuilder WithWeaviateMemoryStore(this KernelBuilder builder,
-        HttpClient httpClient,
-        string? endpoint = null,
-        string? apiKey = null,
-        string? apiVersion = null)
+    /// <typeparam name="TRecord">The type of the record.</typeparam>
+    /// <param name="builder">The builder to register the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> on.</param>
+    /// <param name="collectionName">The name of the collection.</param>
+    /// <param name="httpClient">
+    /// <see cref="HttpClient"/> that is used to interact with Weaviate API.
+    /// <see cref="HttpClient.BaseAddress"/> should point to remote or local cluster and API key can be configured via <see cref="HttpClient.DefaultRequestHeaders"/>.
+    /// It's also possible to provide these parameters via <see cref="WeaviateVectorStoreOptions"/>.
+    /// </param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddWeaviateVectorStoreRecordCollection<TRecord>(
+        this IKernelBuilder builder,
+        string collectionName,
+        HttpClient? httpClient = default,
+        WeaviateVectorStoreRecordCollectionOptions<TRecord>? options = default,
+        string? serviceId = default)
     {
-        builder.WithMemoryStorage((loggerFactory, httpHandlerFactory) =>
-        {
-            return new WeaviateMemoryStore(
-                HttpClientProvider.GetHttpClient(httpHandlerFactory, httpClient, loggerFactory),
-                apiKey,
-                endpoint,
-                apiVersion,
-                loggerFactory);
-        });
-
+        builder.Services.AddWeaviateVectorStoreRecordCollection(collectionName, httpClient, options, serviceId);
         return builder;
     }
 }
