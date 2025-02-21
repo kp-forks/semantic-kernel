@@ -13,7 +13,7 @@ using Xunit;
 
 namespace SemanticKernel.Plugins.UnitTests.Core;
 
-public class HttpPluginTests : IDisposable
+public sealed class HttpPluginTests : IDisposable
 {
     private readonly string _content = "hello world";
     private readonly string _uriString = "http://www.example.com";
@@ -28,18 +28,14 @@ public class HttpPluginTests : IDisposable
     public void ItCanBeInstantiated()
     {
         // Act - Assert no exception occurs
-        var skill = new HttpPlugin();
+        var plugin = new HttpPlugin();
     }
 
     [Fact]
     public void ItCanBeImported()
     {
-        // Arrange
-        var kernel = KernelBuilder.Create();
-        var skill = new HttpPlugin();
-
         // Act - Assert no exception occurs e.g. due to reflection
-        kernel.ImportSkill(skill, "http");
+        Assert.NotNull(KernelPluginFactory.CreateFromType<HttpPlugin>("http"));
     }
 
     [Fact]
@@ -48,10 +44,10 @@ public class HttpPluginTests : IDisposable
         // Arrange
         var mockHandler = this.CreateMock();
         using var client = new HttpClient(mockHandler.Object);
-        var skill = new HttpPlugin(client);
+        var plugin = new HttpPlugin(client);
 
         // Act
-        var result = await skill.GetAsync(this._uriString);
+        var result = await plugin.GetAsync(this._uriString);
 
         // Assert
         Assert.Equal(this._content, result);
@@ -64,10 +60,10 @@ public class HttpPluginTests : IDisposable
         // Arrange
         var mockHandler = this.CreateMock();
         using var client = new HttpClient(mockHandler.Object);
-        var skill = new HttpPlugin(client);
+        var plugin = new HttpPlugin(client);
 
         // Act
-        var result = await skill.PostAsync(this._uriString, this._content);
+        var result = await plugin.PostAsync(this._uriString, this._content);
 
         // Assert
         Assert.Equal(this._content, result);
@@ -80,10 +76,10 @@ public class HttpPluginTests : IDisposable
         // Arrange
         var mockHandler = this.CreateMock();
         using var client = new HttpClient(mockHandler.Object);
-        var skill = new HttpPlugin(client);
+        var plugin = new HttpPlugin(client);
 
         // Act
-        var result = await skill.PutAsync(this._uriString, this._content);
+        var result = await plugin.PutAsync(this._uriString, this._content);
 
         // Assert
         Assert.Equal(this._content, result);
@@ -96,10 +92,10 @@ public class HttpPluginTests : IDisposable
         // Arrange
         var mockHandler = this.CreateMock();
         using var client = new HttpClient(mockHandler.Object);
-        var skill = new HttpPlugin(client);
+        var plugin = new HttpPlugin(client);
 
         // Act
-        var result = await skill.DeleteAsync(this._uriString);
+        var result = await plugin.DeleteAsync(this._uriString);
 
         // Assert
         Assert.Equal(this._content, result);
@@ -130,15 +126,6 @@ public class HttpPluginTests : IDisposable
 
     public void Dispose()
     {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            this._response.Dispose();
-        }
+        this._response.Dispose();
     }
 }

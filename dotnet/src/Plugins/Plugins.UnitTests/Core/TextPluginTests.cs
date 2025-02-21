@@ -18,21 +18,18 @@ public class TextPluginTests
     [Fact]
     public void ItCanBeImported()
     {
-        // Arrange
-        var kernel = Kernel.Builder.Build();
-
         // Act - Assert no exception occurs e.g. due to reflection
-        kernel.ImportSkill(new TextPlugin(), "text");
+        Assert.NotNull(KernelPluginFactory.CreateFromType<TextPlugin>("text"));
     }
 
     [Fact]
     public void ItCanTrim()
     {
         // Arrange
-        var skill = new TextPlugin();
+        var plugin = new TextPlugin();
 
         // Act
-        var result = skill.Trim("  hello world  ");
+        var result = plugin.Trim("  hello world  ");
 
         // Assert
         Assert.Equal("hello world", result);
@@ -42,10 +39,10 @@ public class TextPluginTests
     public void ItCanTrimStart()
     {
         // Arrange
-        var skill = new TextPlugin();
+        var plugin = new TextPlugin();
 
         // Act
-        var result = skill.TrimStart("  hello world  ");
+        var result = plugin.TrimStart("  hello world  ");
 
         // Assert
         Assert.Equal("hello world  ", result);
@@ -55,10 +52,10 @@ public class TextPluginTests
     public void ItCanTrimEnd()
     {
         // Arrange
-        var skill = new TextPlugin();
+        var plugin = new TextPlugin();
 
         // Act
-        var result = skill.TrimEnd("  hello world  ");
+        var result = plugin.TrimEnd("  hello world  ");
 
         // Assert
         Assert.Equal("  hello world", result);
@@ -68,10 +65,10 @@ public class TextPluginTests
     public void ItCanUppercase()
     {
         // Arrange
-        var skill = new TextPlugin();
+        var plugin = new TextPlugin();
 
         // Act
-        var result = skill.Uppercase("hello world");
+        var result = plugin.Uppercase("hello world");
 
         // Assert
         Assert.Equal("HELLO WORLD", result);
@@ -81,10 +78,10 @@ public class TextPluginTests
     public void ItCanLowercase()
     {
         // Arrange
-        var skill = new TextPlugin();
+        var plugin = new TextPlugin();
 
         // Act
-        var result = skill.Lowercase("HELLO WORLD");
+        var result = plugin.Lowercase("HELLO WORLD");
 
         // Assert
         Assert.Equal("hello world", result);
@@ -98,13 +95,13 @@ public class TextPluginTests
     [InlineData("", 0)]
     [InlineData(" ", 1)]
     [InlineData(null, 0)]
-    public void ItCanLength(string textToLength, int expectedLength)
+    public void ItCanLength(string? textToLength, int expectedLength)
     {
         // Arrange
         var target = new TextPlugin();
 
         // Act
-        var result = target.Length(textToLength);
+        var result = target.Length(textToLength ?? string.Empty);
 
         // Assert
         Assert.Equal(expectedLength, result);
@@ -118,14 +115,14 @@ public class TextPluginTests
     [InlineData("", "")]
     [InlineData(" ", " ")]
     [InlineData(null, "")]
-    public void ItCanConcat(string textToConcat, string text2ToConcat)
+    public void ItCanConcat(string? textToConcat, string text2ToConcat)
     {
         // Arrange
         var target = new TextPlugin();
         var expected = string.Concat(textToConcat, text2ToConcat);
 
         // Act
-        string result = target.Concat(textToConcat, text2ToConcat);
+        string result = target.Concat(textToConcat ?? string.Empty, text2ToConcat);
 
         // Assert
         Assert.Equal(expected, result);

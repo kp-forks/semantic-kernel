@@ -5,12 +5,11 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Plugins.MsGraph.Diagnostics;
-using Microsoft.SemanticKernel.SkillDefinition;
 
 namespace Microsoft.SemanticKernel.Plugins.MsGraph;
 
 /// <summary>
-/// Organizational Hierarchy skill.
+/// Organizational Hierarchy plugin.
 /// Provides methods to get information about the organization hierarchy, such as direct reports and manager details.
 /// </summary>
 public sealed class OrganizationHierarchyPlugin
@@ -33,7 +32,7 @@ public sealed class OrganizationHierarchyPlugin
     /// </summary>
     /// <param name="cancellationToken">An optional <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A JSON string containing the email addresses of the direct reports of the current user.</returns>
-    [SKFunction, Description("Get my direct report's email addresses.")]
+    [KernelFunction, Description("Get my direct report's email addresses.")]
     public async Task<string> GetMyDirectReportsEmailAsync(CancellationToken cancellationToken = default)
         => JsonSerializer.Serialize(await this._connector.GetDirectReportsEmailAsync(cancellationToken).ConfigureAwait(false));
 
@@ -42,7 +41,7 @@ public sealed class OrganizationHierarchyPlugin
     /// </summary>
     /// <param name="cancellationToken">An optional <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A string containing the email address of the manager of the current user.</returns>
-    [SKFunction, Description("Get my manager's email address.")]
+    [KernelFunction, Description("Get my manager's email address.")]
     public async Task<string> GetMyManagerEmailAsync(CancellationToken cancellationToken = default)
         => await this._connector.GetManagerEmailAsync(cancellationToken).ConfigureAwait(false);
 
@@ -51,7 +50,7 @@ public sealed class OrganizationHierarchyPlugin
     /// </summary>
     /// <param name="cancellationToken">An optional <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A string containing the name of the manager of the current user.</returns>
-    [SKFunction, Description("Get my manager's name.")]
+    [KernelFunction, Description("Get my manager's name.")]
     public async Task<string> GetMyManagerNameAsync(CancellationToken cancellationToken = default)
         => await this._connector.GetManagerNameAsync(cancellationToken).ConfigureAwait(false);
 }

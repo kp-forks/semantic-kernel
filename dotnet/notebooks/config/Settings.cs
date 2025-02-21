@@ -59,7 +59,7 @@ public static class Settings
             else
             {
                 // Use the best model by default, and reduce the setup friction, particularly in VS Studio.
-                model = "gpt-3.5-turbo";
+                model = "gpt-4o-mini";
             }
         }
 
@@ -92,12 +92,12 @@ public static class Settings
         {
             if (useAzureOpenAI)
             {
-                apiKey = await InteractiveKernel.GetPasswordAsync("Please enter your Azure OpenAI API key");
+                apiKey = (await InteractiveKernel.GetPasswordAsync("Please enter your Azure OpenAI API key")).GetClearTextPassword();
                 orgId = "";
             }
             else
             {
-                apiKey = await InteractiveKernel.GetPasswordAsync("Please enter your OpenAI API key");
+                apiKey = (await InteractiveKernel.GetPasswordAsync("Please enter your OpenAI API key")).GetClearTextPassword();
             }
         }
 

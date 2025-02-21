@@ -24,11 +24,8 @@ public class TimePluginTests
     [Fact]
     public void ItCanBeImported()
     {
-        // Arrange
-        var kernel = Kernel.Builder.Build();
-
         // Act - Assert no exception occurs e.g. due to reflection
-        kernel.ImportSkill(new TimePlugin(), "time");
+        Assert.NotNull(KernelPluginFactory.CreateFromType<TimePlugin>("time"));
     }
 
     [Fact]
@@ -36,8 +33,8 @@ public class TimePluginTests
     {
         double interval = 2;
         DateTime expected = DateTime.Now.AddDays(-interval);
-        var skill = new TimePlugin();
-        string result = skill.DaysAgo(interval, CultureInfo.CurrentCulture);
+        var plugin = new TimePlugin();
+        string result = plugin.DaysAgo(interval, CultureInfo.CurrentCulture);
         DateTime returned = DateTime.Parse(result, CultureInfo.CurrentCulture);
         Assert.Equal(expected.Day, returned.Day);
         Assert.Equal(expected.Month, returned.Month);
@@ -48,18 +45,18 @@ public class TimePluginTests
     public void Day()
     {
         string expected = DateTime.Now.ToString("dd", CultureInfo.CurrentCulture);
-        var skill = new TimePlugin();
-        string result = skill.Day(CultureInfo.CurrentCulture);
+        var plugin = new TimePlugin();
+        string result = plugin.Day(CultureInfo.CurrentCulture);
         Assert.Equal(expected, result);
         Assert.True(int.TryParse(result, out _));
     }
 
     [Fact]
-    public async Task LastMatchingDayBadInput()
+    public async Task LastMatchingDayBadInputAsync()
     {
-        var skill = new TimePlugin();
+        KernelFunction func = KernelPluginFactory.CreateFromType<TimePlugin>()["DateMatchingLastDayName"];
 
-        var ex = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => FunctionHelpers.CallViaKernel(skill, "DateMatchingLastDayName", ("input", "not a day name")));
+        var ex = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => func.InvokeAsync(new(), new() { ["input"] = "not a day name" }));
 
         AssertExtensions.AssertIsArgumentOutOfRange(ex, "input", "not a day name");
     }
@@ -78,8 +75,8 @@ public class TimePluginTests
         bool found = date.DayOfWeek == dayName;
         Assert.True(found);
 
-        var skill = new TimePlugin();
-        string result = skill.DateMatchingLastDayName(dayName, CultureInfo.CurrentCulture);
+        var plugin = new TimePlugin();
+        string result = plugin.DateMatchingLastDayName(dayName, CultureInfo.CurrentCulture);
         DateTime returned = DateTime.Parse(result, CultureInfo.CurrentCulture);
         Assert.Equal(date.Day, returned.Day);
         Assert.Equal(date.Month, returned.Month);

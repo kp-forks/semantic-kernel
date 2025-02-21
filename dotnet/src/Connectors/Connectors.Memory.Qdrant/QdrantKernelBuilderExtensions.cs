@@ -1,66 +1,94 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Net.Http;
-using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
+using Microsoft.Extensions.VectorData;
+using Microsoft.SemanticKernel.Connectors.Qdrant;
+using Qdrant.Client;
 
-#pragma warning disable IDE0130
 namespace Microsoft.SemanticKernel;
-#pragma warning restore IDE0130
 
 /// <summary>
-/// Provides extension methods for the <see cref="KernelBuilder"/> class to configure Qdrant memory connector.
+/// Extension methods to register Qdrant <see cref="IVectorStore"/> instances on the <see cref="IKernelBuilder"/>.
 /// </summary>
 public static class QdrantKernelBuilderExtensions
 {
     /// <summary>
-    /// Registers Qdrant memory connector.
+    /// Register a Qdrant <see cref="IVectorStore"/> with the specified service ID and where <see cref="QdrantClient"/> is retrieved from the dependency injection container.
     /// </summary>
-    /// <param name="builder">The <see cref="KernelBuilder"/> instance.</param>
-    /// <param name="endpoint">The Qdrant Vector Database endpoint.</param>
-    /// <param name="vectorSize">The size of the vectors.</param>
-    /// <returns>Self instance</returns>
-    public static KernelBuilder WithQdrantMemoryStore(this KernelBuilder builder,
-        string endpoint,
-        int vectorSize)
+    /// <param name="builder">The builder to register the <see cref="IVectorStore"/> on.</param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStore"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddQdrantVectorStore(this IKernelBuilder builder, QdrantVectorStoreOptions? options = default, string? serviceId = default)
     {
-        builder.WithMemoryStorage((loggerFactory, httpHandlerFactory) =>
-        {
-            var client = new QdrantVectorDbClient(
-                HttpClientProvider.GetHttpClient(httpHandlerFactory, null, loggerFactory),
-                vectorSize,
-                endpoint,
-                loggerFactory);
-
-            return new QdrantMemoryStore(client, loggerFactory);
-        });
-
+        builder.Services.AddQdrantVectorStore(options, serviceId);
+        return builder;
+    }
+    /// <summary>
+    /// Register a Qdrant <see cref="IVectorStore"/> with the specified service ID and where <see cref="QdrantClient"/> is constructed using the provided parameters.
+    /// </summary>
+    /// <param name="builder">The builder to register the <see cref="IVectorStore"/> on.</param>
+    /// <param name="host">The Qdrant service host name.</param>
+    /// <param name="port">The Qdrant service port.</param>
+    /// <param name="https">A value indicating whether to use HTTPS for communicating with Qdrant.</param>
+    /// <param name="apiKey">The Qdrant service API key.</param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStore"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddQdrantVectorStore(this IKernelBuilder builder, string host, int port = 6334, bool https = false, string? apiKey = default, QdrantVectorStoreOptions? options = default, string? serviceId = default)
+    {
+        builder.Services.AddQdrantVectorStore(host, port, https, apiKey, options, serviceId);
         return builder;
     }
 
     /// <summary>
-    /// Registers Qdrant memory connector.
+    /// Register a Qdrant <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> and <see cref="IVectorizedSearch{TRecord}"/> with the specified service ID
+    /// and where the Qdrant <see cref="QdrantClient"/> is retrieved from the dependency injection container.
     /// </summary>
-    /// <param name="builder">The <see cref="KernelBuilder"/> instance</param>
-    /// <param name="httpClient">The optional <see cref="HttpClient"/> instance used for making HTTP requests.</param>
-    /// <param name="vectorSize">The size of the vectors.</param>
-    /// <param name="endpoint">The Qdrant Vector Database endpoint. If not specified, the base address of the HTTP client is used.</param>
-    /// <returns>Self instance</returns>
-    public static KernelBuilder WithQdrantMemoryStore(this KernelBuilder builder,
-        HttpClient httpClient,
-        int vectorSize,
-        string? endpoint = null)
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TRecord">The type of the record.</typeparam>
+    /// <param name="builder">The builder to register the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> on.</param>
+    /// <param name="collectionName">The name of the collection.</param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddQdrantVectorStoreRecordCollection<TKey, TRecord>(
+        this IKernelBuilder builder,
+        string collectionName,
+        QdrantVectorStoreRecordCollectionOptions<TRecord>? options = default,
+        string? serviceId = default)
+        where TKey : notnull
     {
-        builder.WithMemoryStorage((loggerFactory, httpHandlerFactory) =>
-        {
-            var client = new QdrantVectorDbClient(
-                HttpClientProvider.GetHttpClient(httpHandlerFactory, httpClient, loggerFactory),
-                vectorSize,
-                endpoint,
-                loggerFactory);
+        builder.Services.AddQdrantVectorStoreRecordCollection<TKey, TRecord>(collectionName, options, serviceId);
+        return builder;
+    }
 
-            return new QdrantMemoryStore(client, loggerFactory);
-        });
-
+    /// <summary>
+    /// Register a Qdrant <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> and <see cref="IVectorizedSearch{TRecord}"/> with the specified service ID
+    /// and where the Qdrant <see cref="QdrantClient"/> is constructed using the provided parameters.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TRecord">The type of the record.</typeparam>
+    /// <param name="builder">The builder to register the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/> on.</param>
+    /// <param name="collectionName">The name of the collection.</param>
+    /// <param name="host">The Qdrant service host name.</param>
+    /// <param name="port">The Qdrant service port.</param>
+    /// <param name="https">A value indicating whether to use HTTPS for communicating with Qdrant.</param>
+    /// <param name="apiKey">The Qdrant service API key.</param>
+    /// <param name="options">Optional options to further configure the <see cref="IVectorStoreRecordCollection{TKey, TRecord}"/>.</param>
+    /// <param name="serviceId">An optional service id to use as the service key.</param>
+    /// <returns>The kernel builder.</returns>
+    public static IKernelBuilder AddQdrantVectorStoreRecordCollection<TKey, TRecord>(
+        this IKernelBuilder builder,
+        string collectionName,
+        string host,
+        int port = 6334,
+        bool https = false,
+        string? apiKey = default,
+        QdrantVectorStoreRecordCollectionOptions<TRecord>? options = default,
+        string? serviceId = default)
+        where TKey : notnull
+    {
+        builder.Services.AddQdrantVectorStoreRecordCollection<TKey, TRecord>(collectionName, host, port, https, apiKey, options, serviceId);
         return builder;
     }
 }

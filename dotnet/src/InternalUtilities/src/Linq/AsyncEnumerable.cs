@@ -1,19 +1,21 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CA1510 // Use 'ArgumentNullException.ThrowIfNull' (.NET 8)
+using Microsoft.SemanticKernel;
 
 // Used for compatibility with System.Linq.Async Nuget pkg
 namespace System.Linq;
 
+[ExcludeFromCodeCoverage]
 internal static class AsyncEnumerable
 {
     public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Instance;
 
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
     public static IEnumerable<T> ToEnumerable<T>(this IAsyncEnumerable<T> source, CancellationToken cancellationToken = default)
     {
         var enumerator = source.GetAsyncEnumerator(cancellationToken);
@@ -29,7 +31,10 @@ internal static class AsyncEnumerable
             enumerator.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
     }
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
 
+#pragma warning disable IDE1006 // Naming rule violation: Missing suffix: 'Async'
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(this IEnumerable<T> source)
     {
         foreach (var item in source)
@@ -37,6 +42,8 @@ internal static class AsyncEnumerable
             yield return item;
         }
     }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore IDE1006 // Naming rule violation: Missing suffix: 'Async'
 
     public static async ValueTask<T?> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> source, CancellationToken cancellationToken = default)
     {
@@ -110,15 +117,8 @@ internal static class AsyncEnumerable
     /// <remarks>The return type of this operator differs from the corresponding operator on IEnumerable in order to retain asynchronous behavior.</remarks>
     public static ValueTask<bool> AnyAsync<TSource>(this IAsyncEnumerable<TSource> source, Func<TSource, bool> predicate, CancellationToken cancellationToken = default)
     {
-        if (source == null)
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
-
-        if (predicate == null)
-        {
-            throw new ArgumentNullException(nameof(predicate));
-        }
+        Verify.NotNull(source);
+        Verify.NotNull(predicate);
 
         return Core(source, predicate, cancellationToken);
 
@@ -135,6 +135,40 @@ internal static class AsyncEnumerable
             return false;
         }
     }
+
+#pragma warning disable IDE1006 // Naming rule violation: Missing suffix: 'Async'
+
+    /// <summary>
+    /// Projects each element of an <see cref="IAsyncEnumerable{TSource}"/> into a new form by incorporating
+    /// an asynchronous transformation function.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the elements of the source sequence.</typeparam>
+    /// <typeparam name="TResult">The type of the elements of the resulting sequence.</typeparam>
+    /// <param name="source">An <see cref="IAsyncEnumerable{TSource}"/> to invoke a transform function on.</param>
+    /// <param name="selector">
+    /// A transform function to apply to each element. This function takes an element of
+    /// type TSource and returns an element of type TResult.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A CancellationToken to observe while iterating through the sequence.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IAsyncEnumerable{TResult}"/> whose elements are the result of invoking the transform
+    /// function on each element of the original sequence.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when the source or selector is null.</exception>
+    public static async IAsyncEnumerable<TResult> SelectAsync<TSource, TResult>(
+       this IAsyncEnumerable<TSource> source,
+       Func<TSource, TResult> selector,
+       [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            yield return selector(item);
+        }
+    }
+
+#pragma warning restore IDE1006 // Naming rule violation: Missing suffix: 'Async'
 
     private sealed class EmptyAsyncEnumerable<T> : IAsyncEnumerable<T>, IAsyncEnumerator<T>
     {
